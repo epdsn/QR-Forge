@@ -27,6 +27,7 @@ function createWindow() {
     minWidth: 560,
     minHeight: 760,
     title: 'QR Forge',
+    icon: path.join(__dirname, 'build', 'icon.png'),
     backgroundColor: '#ecebf8',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -48,6 +49,11 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+ipcMain.handle('set-window-bg', (event, color) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && color) win.setBackgroundColor(color);
 });
 
 ipcMain.handle('encrypt-params', async (_event, { params, secret }) => {

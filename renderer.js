@@ -11,9 +11,17 @@ const qrImage = document.getElementById('qrImage');
 const qrCaption = document.getElementById('qrCaption');
 const savePngBtn = document.getElementById('savePng');
 const statusEl = document.getElementById('status');
+const themeToggle = document.getElementById('themeToggle');
+const themeToggleLabel = document.getElementById('themeToggleLabel');
 
 let lastDataUrl = null;
 let previewToken = 0;
+
+const THEME_KEY = 'qr-forge-theme';
+const THEME_BG = {
+  light: '#ecebf8',
+  dark: '#1a1c31',
+};
 
 const DEFAULT_PARAMS = [
   { key: 'deviceId', value: '' },
@@ -213,7 +221,44 @@ async function savePng() {
   }
 }
 
+function getTheme() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  return theme === 'dark' ? 'dark' : 'light';
+}
+
+function syncThemeUi(theme) {
+  const nextLabel = theme === 'dark' ? 'Light' : 'Dark';
+  themeToggleLabel.textContent = nextLabel;
+  themeToggle.setAttribute(
+    'aria-label',
+    theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
+  );
+  if (window.qrForge?.setWindowBg) {
+    window.qrForge.setWindowBg(THEME_BG[theme]);
+  }
+}
+
+function setTheme(theme) {
+  const next = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {
+    // ignore storage failures
+  }
+  syncThemeUi(next);
+}
+
+function initTheme() {
+  syncThemeUi(getTheme());
+  themeToggle.addEventListener('click', () => {
+    setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  });
+}
+
 function init() {
+  initTheme();
+
   for (const param of DEFAULT_PARAMS) {
     paramList.appendChild(createParamRow(param.key, param.value));
   }
