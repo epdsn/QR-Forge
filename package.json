@@ -12,7 +12,8 @@
     "appId": "com.qrforge.app",
     "productName": "QR Forge",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "main.js",
@@ -20,10 +21,13 @@
       "index.html",
       "styles.css",
       "renderer.js",
-      "package.json"
+      "package.json",
+      "build/icon.png",
+      "build/logo.svg"
     ],
     "win": {
-      "target": ["nsis"]
+      "target": ["nsis"],
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -34,6 +38,7 @@
     },
     "mac": {
       "target": ["dmg"],
+      "icon": "build/icon.png",
       "category": "public.app-category.utilities"
     }
   },
