@@ -110,12 +110,54 @@
             </label>
           </div>
 
+          <div class="encrypt-block">
+            <label class="toggle">
+              <input type="checkbox" id="shortenToggle" />
+              <span class="toggle-ui" aria-hidden="true"></span>
+              <span class="toggle-copy">
+                <span class="toggle-title">Shorten URL</span>
+                <span class="toggle-hint"
+                  >Requires your shortener API. Click Generate to create the short link for the QR.</span
+                >
+              </span>
+            </label>
+
+            <div id="shortenerFields" class="shortener-fields" hidden>
+              <label class="field">
+                <span class="field-label">Shortener endpoint</span>
+                <input
+                  id="shortenerEndpoint"
+                  type="url"
+                  placeholder="https://api.example.com/shorten"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">API key (optional)</span>
+                <input
+                  id="shortenerApiKey"
+                  type="password"
+                  placeholder="Bearer / x-api-key value"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </label>
+            </div>
+          </div>
+
           <div class="url-preview" aria-live="polite">
             <span class="field-label">Resulting URL</span>
             <code id="urlPreview" class="url-text">Enter a base URL to begin</code>
           </div>
 
-          <button type="button" id="generate" class="btn-primary">Generate</button>
+          <div class="composer-actions">
+            <button type="button" id="generate" class="btn-primary">Generate</button>
+            <div class="workspace-actions">
+              <button type="button" id="saveWorkspace" class="btn-ghost">Save workspace</button>
+              <button type="button" id="openWorkspace" class="btn-ghost">Open workspace</button>
+            </div>
+          </div>
         </section>
 
         <section class="output" id="output" data-state="empty" aria-label="QR code preview">

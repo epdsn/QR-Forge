@@ -9,6 +9,7 @@ A simple desktop QR code generator for **Windows** and **macOS**. Enter a base U
 
 - **Base URL + optional parameters** — build plain URLs or query strings as needed
 - **Optional encryption** — pack parameters (or an empty payload) into a single AES-encrypted `code=` query value
+- **Optional URL shortener** — on Generate, POST the long URL to your API and encode the short link in the QR
 - **Live URL preview** — see the final link update as you type
 - **On-screen QR code** — generate without leaving the window
 - **PNG export** — save the code with a native Save dialog
@@ -57,9 +58,10 @@ The Windows installer lets users choose the install folder and creates Start Men
 1. Enter a **base URL** (e.g. `https://example.com/path`)
 2. Optionally fill in parameter **keys** and **values**, or remove them for a plain URL
 3. Optionally enable **Encrypt parameters** and enter a shared secret
-4. Confirm the **resulting URL** preview
-5. Click **Generate**
-6. Click **Save as PNG** to export the image
+4. Optionally enable **Shorten URL** and enter your shortener API endpoint
+5. Confirm the **resulting URL** preview
+6. Click **Generate**
+7. Click **Save as PNG** to export the image
 
 ### Encryption mode
 
@@ -99,6 +101,33 @@ function decryptCode(code, secret) {
 }
 ```
 
+### URL shortener
+
+When **Shorten URL** is on, Generate builds the full URL first (plain or encrypted), then `POST`s it to your endpoint. The QR encodes only the returned short link — ideal for large encrypted `code=` values.
+
+**Request**
+
+```http
+POST /shorten
+Content-Type: application/json
+Authorization: Bearer <optional api key>
+x-api-key: <optional api key>
+
+{ "url": "https://example.com/path?code=..." }
+```
+
+**Response**
+
+```json
+{ "shortUrl": "https://go.example.com/x7K2" }
+```
+
+Also accepts `short_url` or `url` as the response field name.
+
+Your AWS API can either redirect that short ID to the long URL, or resolve an ID to a stored payload — QR Forge only needs the `shortUrl` back.
+
+A ready-to-deploy example lives in [`examples/aws-shortener`](examples/aws-shortener).
+
 ## Project structure
 
 ```
@@ -107,7 +136,9 @@ function decryptCode(code, secret) {
 ├── renderer.js    # UI logic
 ├── index.html     # App layout
 ├── styles.css     # Styling
-└── package.json   # Dependencies and electron-builder config
+├── package.json   # Dependencies and electron-builder config
+└── examples/
+    └── aws-shortener/   # API Gateway + Lambda + DynamoDB shortener
 ```
 
 ## Tech stack

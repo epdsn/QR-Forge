@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: QR Forge URL shortener (HTTP API + Lambda + DynamoDB)
+
+Parameters:
+  ApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Optional shared secret. If set, POST /shorten requires it (Bearer or x-api-key).
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: nodejs20.x
+
+Resources:
+  LinksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ShortenerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: handler.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref LinksTable
+          API_KEY: !Ref ApiKey
+          # Overwritten after deploy if needed; defaults to the HTTP API URL
+          SHORT_BASE_URL: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LinksTable
+      Events:
+        CreateLink:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /shorten
+            Method: POST
+        CreateLinkRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /
+            Method: POST
+        ResolveLink:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{id}
+            Method: GET
+        OptionsShorten:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /shorten
+            Method: OPTIONS
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+
+Outputs:
+  ShortenerEndpoint:
+    Description: Paste this into QR Forge → Shortener endpoint
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/shorten'
+  ShortBaseUrl:
+    Description: Base used for short links (GET /{id} redirects)
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+  TableName:
+    Value: !Ref LinksTable

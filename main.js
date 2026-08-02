@@ -4,6 +4,57 @@ const fs = require('fs');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
 
+const DEFAULT_PREFS = {
+  theme: 'light',
+  lastSaveDir: null,
+  shortenerEndpoint: '',
+  shortenerApiKey: '',
+};
+
+function prefsPath() {
+  return path.join(app.getPath('userData'), 'preferences.json');
+}
+
+function workspaceCachePath() {
+  return path.join(app.getPath('userData'), 'workspace.json');
+}
+
+function readJson(filePath, fallback) {
+  try {
+    return { ...fallback, ...JSON.parse(fs.readFileSync(filePath, 'utf8')) };
+  } catch {
+    return { ...fallback };
+  }
+}
+
+function writeJson(filePath, data) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+}
+
+function readPrefs() {
+  return readJson(prefsPath(), DEFAULT_PREFS);
+}
+
+function writePrefs(partial) {
+  const next = { ...readPrefs(), ...partial };
+  writeJson(prefsPath(), next);
+  return next;
+}
+
+function readWorkspaceCache() {
+  try {
+    return JSON.parse(fs.readFileSync(workspaceCachePath(), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function writeWorkspaceCache(workspace) {
+  writeJson(workspaceCachePath(), workspace);
+  return workspace;
+}
+
 function encryptPayload(params, secret) {
   if (!secret) {
     throw new Error('Encryption secret is required');
@@ -51,6 +102,48 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
+ipcMain.handle('get-preferences', () => readPrefs());
+
+ipcMain.handle('set-preferences', (_event, partial) => writePrefs(partial || {}));
+
+ipcMain.handle('get-workspace-cache', () => readWorkspaceCache());
+
+ipcMain.handle('set-workspace-cache', (_event, workspace) =>
+  writeWorkspaceCache(workspace)
+);
+
+ipcMain.handle('save-workspace', async (_event, workspace) => {
+  const { canceled, filePath } = await dialog.showSaveDialog({
+    title: 'Save Workspace',
+    defaultPath: 'qr-forge-workspace.json',
+    filters: [{ name: 'QR Forge Workspace', extensions: ['json'] }],
+  });
+
+  if (canceled || !filePath) return { ok: false };
+
+  writeJson(filePath, workspace);
+  writeWorkspaceCache(workspace);
+  return { ok: true, filePath };
+});
+
+ipcMain.handle('open-workspace', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: 'Open Workspace',
+    filters: [{ name: 'QR Forge Workspace', extensions: ['json'] }],
+    properties: ['openFile'],
+  });
+
+  if (canceled || !filePaths?.[0]) return { ok: false };
+
+  try {
+    const workspace = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
+    writeWorkspaceCache(workspace);
+    return { ok: true, filePath: filePaths[0], workspace };
+  } catch {
+    return { ok: false, error: 'Could not read workspace file' };
+  }
+});
+
 ipcMain.handle('set-window-bg', (event, color) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win && color) win.setBackgroundColor(color);
@@ -58,6 +151,83 @@ ipcMain.handle('set-window-bg', (event, color) => {
 
 ipcMain.handle('encrypt-params', async (_event, { params, secret }) => {
   return encryptPayload(params, secret);
+});
+
+/**
+ * Calls a shortener / ID API you host (e.g. AWS API Gateway + Lambda).
+ *
+ * Request:  POST { url: "<long url>" }
+ * Headers:  Content-Type: application/json
+ *           Authorization: Bearer <apiKey>  (if set)
+ *           x-api-key: <apiKey>             (if set)
+ * Response: { "shortUrl": "https://..." }
+ *           also accepts short_url or url
+ */
+ipcMain.handle('shorten-url', async (_event, { url, endpoint, apiKey }) => {
+  const target = String(endpoint || '').trim();
+  const longUrl = String(url || '').trim();
+
+  if (!target) {
+    throw new Error('Shortener endpoint is required');
+  }
+  if (!longUrl) {
+    throw new Error('URL to shorten is required');
+  }
+
+  let parsedEndpoint;
+  try {
+    parsedEndpoint = new URL(target);
+  } catch {
+    throw new Error('Shortener endpoint must be a valid URL');
+  }
+  if (parsedEndpoint.protocol !== 'https:' && parsedEndpoint.protocol !== 'http:') {
+    throw new Error('Shortener endpoint must use http or https');
+  }
+
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  const key = String(apiKey || '').trim();
+  if (key) {
+    headers.Authorization = `Bearer ${key}`;
+    headers['x-api-key'] = key;
+  }
+
+  const response = await fetch(target, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ url: longUrl }),
+  });
+
+  const text = await response.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const detail =
+      (data && (data.error || data.message)) ||
+      text ||
+      `HTTP ${response.status}`;
+    throw new Error(`Shortener failed: ${detail}`);
+  }
+
+  const shortUrl = data?.shortUrl || data?.short_url || data?.url;
+  if (!shortUrl || typeof shortUrl !== 'string') {
+    throw new Error('Shortener response missing shortUrl');
+  }
+
+  try {
+    new URL(shortUrl);
+  } catch {
+    throw new Error('Shortener returned an invalid shortUrl');
+  }
+
+  return shortUrl;
 });
 
 ipcMain.handle('generate-qr', async (_event, text) => {
@@ -74,9 +244,14 @@ ipcMain.handle('generate-qr', async (_event, text) => {
 });
 
 ipcMain.handle('save-png', async (_event, dataUrl) => {
+  const prefs = readPrefs();
+  const defaultPath = prefs.lastSaveDir
+    ? path.join(prefs.lastSaveDir, 'qr-code.png')
+    : 'qr-code.png';
+
   const { canceled, filePath } = await dialog.showSaveDialog({
     title: 'Save QR Code',
-    defaultPath: 'qr-code.png',
+    defaultPath,
     filters: [{ name: 'PNG Image', extensions: ['png'] }],
   });
 
@@ -84,5 +259,6 @@ ipcMain.handle('save-png', async (_event, dataUrl) => {
 
   const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
   fs.writeFileSync(filePath, Buffer.from(base64, 'base64'));
+  writePrefs({ lastSaveDir: path.dirname(filePath) });
   return { ok: true, filePath };
 });
