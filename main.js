@@ -27,7 +27,7 @@ function createWindow() {
     minWidth: 560,
     minHeight: 760,
     title: 'QR Forge',
-    backgroundColor: '#dce5ee',
+    backgroundColor: '#ecebf8',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
