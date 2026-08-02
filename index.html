@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <main class="app">
+      <header class="brand">
+        <p class="brand-mark">QR Forge</p>
+        <p class="brand-sub">Build a URL. Stamp a code.</p>
+      </header>
+
+      <section class="composer" aria-label="URL composer">
+        <label class="field">
+          <span class="field-label">Base URL</span>
+          <input
+            id="baseUrl"
+            type="url"
+            placeholder="https://example.com/path"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </label>
+
+        <div class="params">
+          <div class="params-head">
+            <span class="field-label">URL parameters</span>
+            <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
+          </div>
+          <div id="paramList" class="param-list"></div>
+        </div>
+
+        <div class="url-preview" aria-live="polite">
+          <span class="field-label">Resulting URL</span>
+          <code id="urlPreview" class="url-text">Enter a base URL to begin</code>
+        </div>
+
+        <button type="button" id="generate" class="btn-primary">Generate</button>
+      </section>
+
+      <section class="output" id="output" hidden>
+        <div class="qr-frame">
+          <img id="qrImage" alt="Generated QR code" width="280" height="280" />
+        </div>
+        <p id="qrCaption" class="qr-caption"></p>
+        <button type="button" id="savePng" class="btn-secondary">Save as PNG</button>
+      </section>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

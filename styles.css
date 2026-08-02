@@ -1,0 +1,338 @@
+:root {
+  --ink: #0e1a24;
+  --paper: #e4ebf1;
+  --steel: #1a2b3a;
+  --steel-muted: #5a6f82;
+  --accent: #0f766e;
+  --accent-deep: #0b5c56;
+  --accent-soft: rgba(15, 118, 110, 0.16);
+  --line: rgba(14, 26, 36, 0.14);
+  --radius: 10px;
+  --font-display: "Bricolage Grotesque", Georgia, serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  overflow-x: hidden;
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 0% 0%, rgba(15, 118, 110, 0.14), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 10%, rgba(26, 43, 58, 0.1), transparent 50%),
+    linear-gradient(160deg, #eef3f7 0%, #dce5ee 48%, #cfd9e4 100%);
+}
+
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 2.25rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.brand {
+  animation: rise 0.55s ease-out both;
+}
+
+.brand-mark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 7vw, 3.1rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.brand-sub {
+  margin: 0.45rem 0 0;
+  font-size: 0.95rem;
+  color: var(--steel-muted);
+  font-weight: 400;
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  animation: rise 0.55s ease-out 0.08s both;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--steel-muted);
+}
+
+input[type="url"],
+input[type="text"] {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+input:focus {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input::placeholder {
+  color: #8fa0b0;
+}
+
+.params-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+
+.param-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.param-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+  animation: fade-in 0.25s ease-out both;
+}
+
+.btn-remove {
+  width: 2.15rem;
+  height: 2.15rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--steel-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn-remove:hover {
+  color: var(--accent-deep);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.url-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.url-text {
+  display: block;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius);
+  background: var(--steel);
+  color: #d5e2ec;
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  word-break: break-all;
+  min-height: 2.8rem;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.12s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary {
+  margin-top: 0.25rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary:hover {
+  background: var(--accent-deep);
+}
+
+.btn-primary:active {
+  transform: scale(0.985);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius);
+  background: var(--steel);
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+  background: #12202c;
+}
+
+.btn-ghost {
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-deep);
+  font-size: 0.8rem;
+}
+
+.btn-ghost:hover {
+  background: var(--accent-soft);
+}
+
+.output {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding-top: 0.25rem;
+  animation: rise 0.45s ease-out both;
+}
+
+.qr-frame {
+  padding: 1rem;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 12px 32px rgba(14, 26, 36, 0.12);
+}
+
+#qrImage {
+  display: block;
+  width: 280px;
+  height: 280px;
+  image-rendering: pixelated;
+}
+
+.qr-caption {
+  margin: 0;
+  max-width: 100%;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--steel-muted);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.status {
+  margin: 0;
+  min-height: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--steel-muted);
+  text-align: center;
+}
+
+.status.error {
+  color: #a12f2f;
+}
+
+.status.ok {
+  color: #1f6b4a;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 560px) {
+  .app {
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  .param-row {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-remove {
+    width: 100%;
+  }
+
+  #qrImage {
+    width: 220px;
+    height: 220px;
+  }
+}

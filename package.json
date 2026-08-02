@@ -1,0 +1,49 @@
+{
+  "name": "qr-forge",
+  "version": "1.0.0",
+  "description": "Desktop QR code generator for Windows and macOS",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.qrforge.app",
+    "productName": "QR Forge",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "renderer.js",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "QR Forge"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.utilities"
+    }
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
