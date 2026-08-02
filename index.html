@@ -45,6 +45,28 @@
           <div id="paramList" class="param-list"></div>
         </div>
 
+        <div class="encrypt-block">
+          <label class="toggle">
+            <input type="checkbox" id="encryptToggle" />
+            <span class="toggle-ui" aria-hidden="true"></span>
+            <span class="toggle-copy">
+              <span class="toggle-title">Encrypt parameters</span>
+              <span class="toggle-hint">Pack all fields into a single <code>code=</code> value</span>
+            </span>
+          </label>
+
+          <label class="field" id="secretField" hidden>
+            <span class="field-label">Encryption secret</span>
+            <input
+              id="encryptSecret"
+              type="text"
+              placeholder="Shared secret used to encrypt"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </label>
+        </div>
+
         <div class="url-preview" aria-live="polite">
           <span class="field-label">Resulting URL</span>
           <code id="urlPreview" class="url-text">Enter a base URL to begin</code>

@@ -1,6 +1,9 @@
 const baseUrlInput = document.getElementById('baseUrl');
 const paramList = document.getElementById('paramList');
 const addParamBtn = document.getElementById('addParam');
+const encryptToggle = document.getElementById('encryptToggle');
+const secretField = document.getElementById('secretField');
+const encryptSecret = document.getElementById('encryptSecret');
 const urlPreview = document.getElementById('urlPreview');
 const generateBtn = document.getElementById('generate');
 const output = document.getElementById('output');
@@ -10,6 +13,7 @@ const savePngBtn = document.getElementById('savePng');
 const statusEl = document.getElementById('status');
 
 let lastDataUrl = null;
+let previewToken = 0;
 
 const DEFAULT_PARAMS = [
   { key: 'deviceId', value: '' },
@@ -67,19 +71,49 @@ function getParams() {
   });
 }
 
-function buildUrl() {
+function paramsObject() {
+  const obj = {};
+  for (const { key, value } of getParams()) {
+    if (!key) continue;
+    obj[key] = value;
+  }
+  return obj;
+}
+
+function parseBaseUrl() {
   const base = baseUrlInput.value.trim();
   if (!base) return null;
 
-  let url;
   try {
-    url = new URL(base);
+    return new URL(base);
   } catch {
     try {
-      url = new URL(`https://${base}`);
+      return new URL(`https://${base}`);
     } catch {
       return null;
     }
+  }
+}
+
+async function buildUrl() {
+  const url = parseBaseUrl();
+  if (!url) return null;
+
+  if (encryptToggle.checked) {
+    const secret = encryptSecret.value;
+    if (!secret) {
+      return { error: 'Enter an encryption secret to build code=' };
+    }
+
+    const payload = paramsObject();
+    if (Object.keys(payload).length === 0) {
+      return { error: 'Add at least one parameter to encrypt' };
+    }
+
+    const code = await window.qrForge.encryptParams(payload, secret);
+    url.search = '';
+    url.searchParams.set('code', code);
+    return { url: url.toString() };
   }
 
   for (const { key, value } of getParams()) {
@@ -87,31 +121,55 @@ function buildUrl() {
     url.searchParams.set(key, value);
   }
 
-  return url.toString();
+  return { url: url.toString() };
 }
 
-function updatePreview() {
-  const url = buildUrl();
+async function updatePreview() {
+  const token = ++previewToken;
+  secretField.hidden = !encryptToggle.checked;
+
   if (!baseUrlInput.value.trim()) {
     urlPreview.textContent = 'Enter a base URL to begin';
     generateBtn.disabled = true;
     return;
   }
 
-  if (!url) {
+  if (!parseBaseUrl()) {
     urlPreview.textContent = 'Invalid base URL';
     generateBtn.disabled = true;
     return;
   }
 
-  urlPreview.textContent = url;
-  generateBtn.disabled = false;
+  try {
+    const result = await buildUrl();
+    if (token !== previewToken) return;
+
+    if (!result) {
+      urlPreview.textContent = 'Invalid base URL';
+      generateBtn.disabled = true;
+      return;
+    }
+
+    if (result.error) {
+      urlPreview.textContent = result.error;
+      generateBtn.disabled = true;
+      return;
+    }
+
+    urlPreview.textContent = result.url;
+    generateBtn.disabled = false;
+  } catch (err) {
+    if (token !== previewToken) return;
+    console.error(err);
+    urlPreview.textContent = 'Could not encrypt parameters';
+    generateBtn.disabled = true;
+  }
 }
 
 async function generateQr() {
-  const url = buildUrl();
-  if (!url) {
-    setStatus('Enter a valid base URL first.', 'error');
+  const result = await buildUrl();
+  if (!result?.url) {
+    setStatus(result?.error || 'Enter a valid base URL first.', 'error');
     return;
   }
 
@@ -119,12 +177,15 @@ async function generateQr() {
   generateBtn.disabled = true;
 
   try {
-    const dataUrl = await window.qrForge.generateQr(url);
+    const dataUrl = await window.qrForge.generateQr(result.url);
     lastDataUrl = dataUrl;
     qrImage.src = dataUrl;
-    qrCaption.textContent = url;
+    qrCaption.textContent = result.url;
     output.hidden = false;
-    setStatus('QR code ready.', 'ok');
+    setStatus(
+      encryptToggle.checked ? 'Encrypted QR code ready.' : 'QR code ready.',
+      'ok'
+    );
   } catch (err) {
     console.error(err);
     setStatus('Could not generate QR code.', 'error');
@@ -163,10 +224,15 @@ function init() {
   });
 
   baseUrlInput.addEventListener('input', updatePreview);
+  encryptToggle.addEventListener('change', updatePreview);
+  encryptSecret.addEventListener('input', updatePreview);
   generateBtn.addEventListener('click', generateQr);
   savePngBtn.addEventListener('click', savePng);
 
   baseUrlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generateQr();
+  });
+  encryptSecret.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') generateQr();
   });
 

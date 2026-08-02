@@ -8,6 +8,7 @@ A simple desktop QR code generator for **Windows** and **macOS**. Enter a base U
 ## Features
 
 - **Base URL + parameters** — build URLs like `https://example.com/activate?deviceId=ABC&customerId=42`
+- **Optional encryption** — pack all parameters into a single AES-encrypted `code=` query value
 - **Live URL preview** — see the final link update as you type
 - **On-screen QR code** — generate without leaving the window
 - **PNG export** — save the code with a native Save dialog
@@ -55,9 +56,48 @@ The Windows installer lets users choose the install folder and creates Start Men
 
 1. Enter a **base URL** (e.g. `https://example.com/path`)
 2. Fill in parameter **keys** and **values** (`deviceId`, `customerId`, …)
-3. Confirm the **resulting URL** preview
-4. Click **Generate**
-5. Click **Save as PNG** to export the image
+3. Optionally enable **Encrypt parameters** and enter a shared secret
+4. Confirm the **resulting URL** preview
+5. Click **Generate**
+6. Click **Save as PNG** to export the image
+
+### Encryption mode
+
+When encryption is on, plain query params are replaced with a single `code` parameter:
+
+```
+https://example.com/path?code=<base64url>
+```
+
+**Algorithm**
+
+| Piece | Detail |
+|-------|--------|
+| Cipher | AES-256-GCM |
+| Key | `SHA-256(utf8 secret)` → 32 bytes |
+| IV | 12 random bytes |
+| Payload | JSON object of your parameter key/value pairs |
+| `code` value | base64url(`iv \|\| authTag \|\| ciphertext`) |
+
+Layout of the decoded `code` bytes: **12-byte IV** + **16-byte auth tag** + **ciphertext**.
+
+Example Node.js decrypt:
+
+```js
+const crypto = require('crypto');
+
+function decryptCode(code, secret) {
+  const buf = Buffer.from(code, 'base64url');
+  const iv = buf.subarray(0, 12);
+  const tag = buf.subarray(12, 28);
+  const data = buf.subarray(28);
+  const key = crypto.createHash('sha256').update(secret, 'utf8').digest();
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+  const json = Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+  return JSON.parse(json);
+}
+```
 
 ## Project structure
 
