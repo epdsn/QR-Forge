@@ -67,63 +67,72 @@
         <p class="brand-sub">Build a URL. Stamp a code.</p>
       </header>
 
-      <section class="composer" aria-label="URL composer">
-        <label class="field">
-          <span class="field-label">Base URL</span>
-          <input
-            id="baseUrl"
-            type="url"
-            placeholder="https://example.com/path"
-            autocomplete="off"
-            spellcheck="false"
-          />
-        </label>
-
-        <div class="params">
-          <div class="params-head">
-            <span class="field-label">URL parameters</span>
-            <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
-          </div>
-          <div id="paramList" class="param-list"></div>
-        </div>
-
-        <div class="encrypt-block">
-          <label class="toggle">
-            <input type="checkbox" id="encryptToggle" />
-            <span class="toggle-ui" aria-hidden="true"></span>
-            <span class="toggle-copy">
-              <span class="toggle-title">Encrypt parameters</span>
-              <span class="toggle-hint">Pack all fields into a single <code>code=</code> value</span>
-            </span>
-          </label>
-
-          <label class="field" id="secretField" hidden>
-            <span class="field-label">Encryption secret</span>
+      <div class="workspace">
+        <section class="composer" aria-label="URL composer">
+          <label class="field">
+            <span class="field-label">Base URL</span>
             <input
-              id="encryptSecret"
-              type="text"
-              placeholder="Shared secret used to encrypt"
+              id="baseUrl"
+              type="url"
+              placeholder="https://example.com/path"
               autocomplete="off"
               spellcheck="false"
             />
           </label>
-        </div>
 
-        <div class="url-preview" aria-live="polite">
-          <span class="field-label">Resulting URL</span>
-          <code id="urlPreview" class="url-text">Enter a base URL to begin</code>
-        </div>
+          <div class="params">
+            <div class="params-head">
+              <span class="field-label">URL parameters</span>
+              <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
+            </div>
+            <div id="paramList" class="param-list"></div>
+          </div>
 
-        <button type="button" id="generate" class="btn-primary">Generate</button>
-      </section>
+          <div class="encrypt-block">
+            <label class="toggle">
+              <input type="checkbox" id="encryptToggle" />
+              <span class="toggle-ui" aria-hidden="true"></span>
+              <span class="toggle-copy">
+                <span class="toggle-title">Encrypt parameters</span>
+                <span class="toggle-hint">Pack all fields into a single <code>code=</code> value</span>
+              </span>
+            </label>
 
-      <section class="output" id="output" hidden>
-        <div class="qr-frame">
-          <img id="qrImage" alt="Generated QR code" width="280" height="280" />
-        </div>
-        <p id="qrCaption" class="qr-caption"></p>
-        <button type="button" id="savePng" class="btn-secondary">Save as PNG</button>
-      </section>
+            <label class="field" id="secretField" hidden>
+              <span class="field-label">Encryption secret</span>
+              <input
+                id="encryptSecret"
+                type="text"
+                placeholder="Shared secret used to encrypt"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+          </div>
+
+          <div class="url-preview" aria-live="polite">
+            <span class="field-label">Resulting URL</span>
+            <code id="urlPreview" class="url-text">Enter a base URL to begin</code>
+          </div>
+
+          <button type="button" id="generate" class="btn-primary">Generate</button>
+        </section>
+
+        <section class="output" id="output" data-state="empty" aria-label="QR code preview">
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <p class="qr-placeholder-title">QR preview</p>
+            <p class="qr-placeholder-text">Enter parameters and click Generate</p>
+          </div>
+
+          <div class="qr-result" id="qrResult" hidden>
+            <div class="qr-frame">
+              <img id="qrImage" alt="Generated QR code" width="280" height="280" />
+            </div>
+            <p id="qrCaption" class="qr-caption"></p>
+            <button type="button" id="savePng" class="btn-secondary">Save as PNG</button>
+          </div>
+        </section>
+      </div>
 
       <p id="status" class="status" role="status"></p>
     </main>

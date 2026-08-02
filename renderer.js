@@ -7,6 +7,7 @@ const encryptSecret = document.getElementById('encryptSecret');
 const urlPreview = document.getElementById('urlPreview');
 const generateBtn = document.getElementById('generate');
 const output = document.getElementById('output');
+const qrResult = document.getElementById('qrResult');
 const qrImage = document.getElementById('qrImage');
 const qrCaption = document.getElementById('qrCaption');
 const savePngBtn = document.getElementById('savePng');
@@ -23,10 +24,7 @@ const THEME_BG = {
   dark: '#1a1c31',
 };
 
-const DEFAULT_PARAMS = [
-  { key: 'deviceId', value: '' },
-  { key: 'customerId', value: '' },
-];
+const DEFAULT_PARAMS = [{ key: '', value: '' }];
 
 function setStatus(message, kind = '') {
   statusEl.textContent = message;
@@ -39,7 +37,7 @@ function createParamRow(key = '', value = '') {
 
   const keyInput = document.createElement('input');
   keyInput.type = 'text';
-  keyInput.placeholder = 'Key (e.g. deviceId)';
+  keyInput.placeholder = 'Key';
   keyInput.value = key;
   keyInput.autocomplete = 'off';
   keyInput.spellcheck = false;
@@ -114,10 +112,6 @@ async function buildUrl() {
     }
 
     const payload = paramsObject();
-    if (Object.keys(payload).length === 0) {
-      return { error: 'Add at least one parameter to encrypt' };
-    }
-
     const code = await window.qrForge.encryptParams(payload, secret);
     url.search = '';
     url.searchParams.set('code', code);
@@ -189,7 +183,8 @@ async function generateQr() {
     lastDataUrl = dataUrl;
     qrImage.src = dataUrl;
     qrCaption.textContent = result.url;
-    output.hidden = false;
+    qrResult.hidden = false;
+    output.dataset.state = 'ready';
     setStatus(
       encryptToggle.checked ? 'Encrypted QR code ready.' : 'QR code ready.',
       'ok'

@@ -179,7 +179,7 @@ body {
 .app {
   position: relative;
   z-index: 1;
-  max-width: 540px;
+  width: min(1080px, 100%);
   margin: 0 auto;
   padding: 3.25rem 1.35rem 2.5rem;
   display: flex;
@@ -237,6 +237,12 @@ body {
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow);
   animation: rise 0.55s ease-out 0.08s both;
+}
+
+.workspace {
+  display: grid;
+  gap: 1.25rem;
+  align-items: stretch;
 }
 
 .field {
@@ -502,6 +508,7 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.9rem;
   padding: 1.2rem;
   border-radius: 28px;
@@ -511,6 +518,50 @@ input::placeholder {
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow);
   animation: rise 0.45s ease-out both;
+  min-height: 22rem;
+}
+
+.qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: center;
+  padding: 1.5rem 1.25rem;
+  max-width: 16rem;
+}
+
+.qr-placeholder-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.qr-placeholder-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.output[data-state="empty"] .qr-result {
+  display: none;
+}
+
+.output[data-state="ready"] .qr-placeholder {
+  display: none;
+}
+
+.qr-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
 }
 
 .qr-frame {
@@ -522,8 +573,9 @@ input::placeholder {
 
 #qrImage {
   display: block;
-  width: 280px;
-  height: 280px;
+  width: min(280px, 100%);
+  height: auto;
+  aspect-ratio: 1;
   image-rendering: pixelated;
 }
 
@@ -577,6 +629,34 @@ input::placeholder {
   }
 }
 
+@media (min-width: 960px) {
+  .app {
+    max-width: 1080px;
+    padding-top: 2.75rem;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 1.35rem;
+  }
+
+  .composer,
+  .output {
+    min-height: 100%;
+    height: 100%;
+  }
+
+  .output {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 959px) {
+  .app {
+    max-width: 540px;
+  }
+}
+
 @media (max-width: 560px) {
   .app {
     padding: 3.1rem 1rem 2rem;
@@ -597,8 +677,11 @@ input::placeholder {
     width: 100%;
   }
 
+  .output {
+    min-height: 16rem;
+  }
+
   #qrImage {
-    width: 220px;
-    height: 220px;
+    width: min(220px, 100%);
   }
 }

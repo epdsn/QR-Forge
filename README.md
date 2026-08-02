@@ -7,12 +7,12 @@ A simple desktop QR code generator for **Windows** and **macOS**. Enter a base U
 
 ## Features
 
-- **Base URL + parameters** — build URLs like `https://example.com/activate?deviceId=ABC&customerId=42`
-- **Optional encryption** — pack all parameters into a single AES-encrypted `code=` query value
+- **Base URL + optional parameters** — build plain URLs or query strings as needed
+- **Optional encryption** — pack parameters (or an empty payload) into a single AES-encrypted `code=` query value
 - **Live URL preview** — see the final link update as you type
 - **On-screen QR code** — generate without leaving the window
 - **PNG export** — save the code with a native Save dialog
-- **Add / remove fields** — start with `deviceId` and `customerId`, add more as needed
+- **Add / remove fields** — start with one optional parameter row; remove all if you only need the base URL
 - **Self-contained installers** — no Node.js required on the end user’s machine
 
 ## Download
@@ -55,7 +55,7 @@ The Windows installer lets users choose the install folder and creates Start Men
 ## How to use
 
 1. Enter a **base URL** (e.g. `https://example.com/path`)
-2. Fill in parameter **keys** and **values** (`deviceId`, `customerId`, …)
+2. Optionally fill in parameter **keys** and **values**, or remove them for a plain URL
 3. Optionally enable **Encrypt parameters** and enter a shared secret
 4. Confirm the **resulting URL** preview
 5. Click **Generate**

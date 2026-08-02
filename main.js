@@ -22,10 +22,10 @@ function encryptPayload(params, secret) {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 720,
-    height: 940,
-    minWidth: 560,
-    minHeight: 760,
+    width: 1120,
+    height: 860,
+    minWidth: 480,
+    minHeight: 700,
     title: 'QR Forge',
     icon: path.join(__dirname, 'build', 'icon.png'),
     backgroundColor: '#ecebf8',
