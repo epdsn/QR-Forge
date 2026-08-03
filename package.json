@@ -18,6 +18,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "forge-common.js",
       "index.html",
       "styles.css",
       "renderer.js",

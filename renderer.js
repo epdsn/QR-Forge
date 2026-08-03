@@ -3,10 +3,18 @@ const brandSub = document.getElementById('brandSub');
 const homeView = document.getElementById('homeView');
 const urlView = document.getElementById('urlView');
 const wifiView = document.getElementById('wifiView');
+const contactView = document.getElementById('contactView');
+const messageView = document.getElementById('messageView');
+const textView = document.getElementById('textView');
+const locationView = document.getElementById('locationView');
+const eventView = document.getElementById('eventView');
 const openUrlForge = document.getElementById('openUrlForge');
 const openWifiForge = document.getElementById('openWifiForge');
-const urlBack = document.getElementById('urlBack');
-const wifiBack = document.getElementById('wifiBack');
+const openContactForge = document.getElementById('openContactForge');
+const openMessageForge = document.getElementById('openMessageForge');
+const openTextForge = document.getElementById('openTextForge');
+const openLocationForge = document.getElementById('openLocationForge');
+const openEventForge = document.getElementById('openEventForge');
 
 const baseUrlInput = document.getElementById('baseUrl');
 const paramList = document.getElementById('paramList');
@@ -43,6 +51,72 @@ const wifiQrImage = document.getElementById('wifiQrImage');
 const wifiQrCaption = document.getElementById('wifiQrCaption');
 const wifiSavePngBtn = document.getElementById('wifiSavePng');
 
+const contactFirst = document.getElementById('contactFirst');
+const contactLast = document.getElementById('contactLast');
+const contactPhone = document.getElementById('contactPhone');
+const contactEmail = document.getElementById('contactEmail');
+const contactOrg = document.getElementById('contactOrg');
+const contactTitle = document.getElementById('contactTitle');
+const contactWebsite = document.getElementById('contactWebsite');
+const contactPreview = document.getElementById('contactPreview');
+const contactGenerateBtn = document.getElementById('contactGenerate');
+const contactOutput = document.getElementById('contactOutput');
+const contactQrResult = document.getElementById('contactQrResult');
+const contactQrImage = document.getElementById('contactQrImage');
+const contactQrCaption = document.getElementById('contactQrCaption');
+const contactSavePngBtn = document.getElementById('contactSavePng');
+
+const messageType = document.getElementById('messageType');
+const messageEmailFields = document.getElementById('messageEmailFields');
+const messageSmsFields = document.getElementById('messageSmsFields');
+const messageTelFields = document.getElementById('messageTelFields');
+const messageEmail = document.getElementById('messageEmail');
+const messageSubject = document.getElementById('messageSubject');
+const messageBody = document.getElementById('messageBody');
+const messageSmsPhone = document.getElementById('messageSmsPhone');
+const messageSmsBody = document.getElementById('messageSmsBody');
+const messageTelPhone = document.getElementById('messageTelPhone');
+const messagePreview = document.getElementById('messagePreview');
+const messageGenerateBtn = document.getElementById('messageGenerate');
+const messageOutput = document.getElementById('messageOutput');
+const messageQrResult = document.getElementById('messageQrResult');
+const messageQrImage = document.getElementById('messageQrImage');
+const messageQrCaption = document.getElementById('messageQrCaption');
+const messageSavePngBtn = document.getElementById('messageSavePng');
+
+const textContent = document.getElementById('textContent');
+const textPreview = document.getElementById('textPreview');
+const textGenerateBtn = document.getElementById('textGenerate');
+const textOutput = document.getElementById('textOutput');
+const textQrResult = document.getElementById('textQrResult');
+const textQrImage = document.getElementById('textQrImage');
+const textQrCaption = document.getElementById('textQrCaption');
+const textSavePngBtn = document.getElementById('textSavePng');
+
+const locationLat = document.getElementById('locationLat');
+const locationLng = document.getElementById('locationLng');
+const locationLabel = document.getElementById('locationLabel');
+const locationPreview = document.getElementById('locationPreview');
+const locationGenerateBtn = document.getElementById('locationGenerate');
+const locationOutput = document.getElementById('locationOutput');
+const locationQrResult = document.getElementById('locationQrResult');
+const locationQrImage = document.getElementById('locationQrImage');
+const locationQrCaption = document.getElementById('locationQrCaption');
+const locationSavePngBtn = document.getElementById('locationSavePng');
+
+const eventTitle = document.getElementById('eventTitle');
+const eventStart = document.getElementById('eventStart');
+const eventEnd = document.getElementById('eventEnd');
+const eventLocation = document.getElementById('eventLocation');
+const eventDescription = document.getElementById('eventDescription');
+const eventPreview = document.getElementById('eventPreview');
+const eventGenerateBtn = document.getElementById('eventGenerate');
+const eventOutput = document.getElementById('eventOutput');
+const eventQrResult = document.getElementById('eventQrResult');
+const eventQrImage = document.getElementById('eventQrImage');
+const eventQrCaption = document.getElementById('eventQrCaption');
+const eventSavePngBtn = document.getElementById('eventSavePng');
+
 const statusEl = document.getElementById('status');
 const themeToggle = document.getElementById('themeToggle');
 const themeToggleLabel = document.getElementById('themeToggleLabel');
@@ -70,7 +144,25 @@ const VIEW_SUBTITLES = {
   home: 'Choose a forge to begin.',
   url: 'Build a URL. Stamp a code.',
   wifi: 'Share a network. Scan to connect.',
+  contact: 'Share a contact. Scan to save.',
+  message: 'Open email, SMS, or a phone call.',
+  text: 'Encode any plain text.',
+  location: 'Drop a pin. Scan to navigate.',
+  event: 'Add an event to the calendar.',
 };
+
+const VIEWS = {
+  home: homeView,
+  url: urlView,
+  wifi: wifiView,
+  contact: contactView,
+  message: messageView,
+  text: textView,
+  location: locationView,
+  event: eventView,
+};
+
+const forgeHandlers = {};
 
 const DEFAULT_PARAMS = [{ key: '', value: '' }];
 
@@ -80,21 +172,12 @@ function setStatus(message, kind = '') {
 }
 
 function showView(view) {
-  appEl.dataset.view = view;
-  homeView.hidden = view !== 'home';
-  urlView.hidden = view !== 'url';
-  wifiView.hidden = view !== 'wifi';
-  brandSub.textContent = VIEW_SUBTITLES[view];
-
-  if (view === 'url') {
-    syncOptionFields();
-    updatePreview();
-    if (!baseUrlInput.value) baseUrlInput.focus();
-  } else if (view === 'wifi') {
-    syncWifiFields();
-    updateWifiPreview();
-    if (!wifiSsid.value) wifiSsid.focus();
+  for (const [name, el] of Object.entries(VIEWS)) {
+    el.hidden = name !== view;
   }
+  appEl.dataset.view = view;
+  brandSub.textContent = VIEW_SUBTITLES[view] || VIEW_SUBTITLES.home;
+  forgeHandlers[view]?.onShow?.();
 }
 
 function createParamRow(key = '', value = '') {
@@ -733,17 +816,397 @@ async function restoreSession() {
   }
 
   restoreWifiCache();
+  restoreSimpleForgeCaches();
 }
 
 function initNavigation() {
   openUrlForge.addEventListener('click', () => showView('url'));
   openWifiForge.addEventListener('click', () => showView('wifi'));
-  urlBack.addEventListener('click', () => showView('home'));
-  wifiBack.addEventListener('click', () => showView('home'));
+  openContactForge.addEventListener('click', () => showView('contact'));
+  openMessageForge.addEventListener('click', () => showView('message'));
+  openTextForge.addEventListener('click', () => showView('text'));
+  openLocationForge.addEventListener('click', () => showView('location'));
+  openEventForge.addEventListener('click', () => showView('event'));
+
+  for (const btn of document.querySelectorAll('[data-view-back]')) {
+    btn.addEventListener('click', () => showView('home'));
+  }
+}
+
+function syncMessageFields() {
+  const type = messageType.value;
+  messageEmailFields.hidden = type !== 'email';
+  messageSmsFields.hidden = type !== 'sms';
+  messageTelFields.hidden = type !== 'tel';
+}
+
+function buildContactPayload() {
+  const first = contactFirst.value.trim();
+  const last = contactLast.value.trim();
+  const phone = contactPhone.value.trim();
+  const email = contactEmail.value.trim();
+  const org = contactOrg.value.trim();
+  const title = contactTitle.value.trim();
+  const website = contactWebsite.value.trim();
+
+  if (!first && !last && !phone && !email) {
+    return { empty: true, emptyMessage: 'Enter contact details to begin' };
+  }
+
+  const fn = [first, last].filter(Boolean).join(' ') || email || phone;
+  const lines = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${escapeVCardValue(fn)}`];
+  if (first || last) {
+    lines.push(`N:${escapeVCardValue(last)};${escapeVCardValue(first)};;;`);
+  }
+  if (phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(phone)}`);
+  if (email) lines.push(`EMAIL:${escapeVCardValue(email)}`);
+  if (org) lines.push(`ORG:${escapeVCardValue(org)}`);
+  if (title) lines.push(`TITLE:${escapeVCardValue(title)}`);
+  if (website) lines.push(`URL:${escapeVCardValue(website)}`);
+  lines.push('END:VCARD');
+
+  return { payload: lines.join('\n'), caption: fn };
+}
+
+function buildMessagePayload() {
+  const type = messageType.value;
+
+  if (type === 'email') {
+    const email = messageEmail.value.trim();
+    if (!email) {
+      return { empty: true, emptyMessage: 'Choose a message type to begin' };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { error: 'Enter a valid email address.' };
+    }
+
+    const subject = messageSubject.value.trim();
+    const body = messageBody.value.trim();
+    let payload = `mailto:${email}`;
+    const params = new URLSearchParams();
+    if (subject) params.set('subject', subject);
+    if (body) params.set('body', body);
+    const qs = params.toString();
+    if (qs) payload += `?${qs}`;
+    return { payload, caption: email };
+  }
+
+  if (type === 'sms') {
+    const phone = messageSmsPhone.value.trim();
+    if (!phone) {
+      return { empty: true, emptyMessage: 'Choose a message type to begin' };
+    }
+
+    const body = messageSmsBody.value.trim();
+    let payload = `sms:${phone}`;
+    if (body) payload += `?body=${encodeURIComponent(body)}`;
+    return { payload, caption: phone };
+  }
+
+  const phone = messageTelPhone.value.trim();
+  if (!phone) {
+    return { empty: true, emptyMessage: 'Choose a message type to begin' };
+  }
+
+  return { payload: `tel:${phone}`, caption: phone };
+}
+
+function buildTextPayload() {
+  const text = textContent.value;
+  if (!text.trim()) {
+    return { empty: true, emptyMessage: 'Enter text to begin' };
+  }
+
+  return {
+    payload: text,
+    caption: truncatePreview(text.replace(/\s+/g, ' ').trim(), 48),
+  };
+}
+
+function buildLocationPayload() {
+  const latStr = locationLat.value.trim();
+  const lngStr = locationLng.value.trim();
+
+  if (!latStr && !lngStr) {
+    return { empty: true, emptyMessage: 'Enter coordinates to begin' };
+  }
+
+  const lat = Number(latStr);
+  const lng = Number(lngStr);
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    return { error: 'Enter a valid latitude (-90 to 90).' };
+  }
+  if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+    return { error: 'Enter a valid longitude (-180 to 180).' };
+  }
+
+  const label = locationLabel.value.trim();
+  let payload = `geo:${lat},${lng}`;
+  if (label) payload += `?q=${encodeURIComponent(label)}`;
+
+  return { payload, caption: label || `${lat}, ${lng}` };
+}
+
+function buildEventPayload() {
+  const title = eventTitle.value.trim();
+  const start = eventStart.value;
+  const end = eventEnd.value;
+  const location = eventLocation.value.trim();
+  const description = eventDescription.value.trim();
+
+  if (!title && !start) {
+    return { empty: true, emptyMessage: 'Enter event details to begin' };
+  }
+  if (!title) return { error: 'Enter an event title.' };
+  if (!start) return { error: 'Enter a start date and time.' };
+  if (!end) return { error: 'Enter an end date and time.' };
+
+  const startIcs = toIcsDateTime(start);
+  const endIcs = toIcsDateTime(end);
+  if (!startIcs || !endIcs) {
+    return { error: 'Enter valid start and end times.' };
+  }
+  if (new Date(end) <= new Date(start)) {
+    return { error: 'End time must be after start time.' };
+  }
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'BEGIN:VEVENT',
+    `SUMMARY:${escapeVCardValue(title)}`,
+    `DTSTART:${startIcs}`,
+    `DTEND:${endIcs}`,
+  ];
+  if (location) lines.push(`LOCATION:${escapeVCardValue(location)}`);
+  if (description) lines.push(`DESCRIPTION:${escapeVCardValue(description)}`);
+  lines.push('END:VEVENT', 'END:VCALENDAR');
+
+  return { payload: lines.join('\n'), caption: title };
+}
+
+function initSimpleForges() {
+  forgeHandlers.url = {
+    onShow() {
+      syncOptionFields();
+      updatePreview();
+      if (!baseUrlInput.value) baseUrlInput.focus();
+    },
+  };
+
+  forgeHandlers.wifi = {
+    onShow() {
+      syncWifiFields();
+      updateWifiPreview();
+      if (!wifiSsid.value) wifiSsid.focus();
+    },
+  };
+
+  forgeHandlers.contact = createSimpleForge({
+    setStatus,
+    cacheKey: 'qr-forge-contact-cache',
+    previewEl: contactPreview,
+    generateBtn: contactGenerateBtn,
+    outputEl: contactOutput,
+    qrResultEl: contactQrResult,
+    qrImageEl: contactQrImage,
+    qrCaptionEl: contactQrCaption,
+    savePngBtn: contactSavePngBtn,
+    build: buildContactPayload,
+    focusEl: contactFirst,
+    inputEls: [
+      contactFirst,
+      contactLast,
+      contactPhone,
+      contactEmail,
+      contactOrg,
+      contactTitle,
+      contactWebsite,
+    ],
+    collectCache: () => ({
+      first: contactFirst.value,
+      last: contactLast.value,
+      phone: contactPhone.value,
+      email: contactEmail.value,
+      org: contactOrg.value,
+      title: contactTitle.value,
+      website: contactWebsite.value,
+    }),
+    applyCache: (cache) => {
+      contactFirst.value = cache.first || '';
+      contactLast.value = cache.last || '';
+      contactPhone.value = cache.phone || '';
+      contactEmail.value = cache.email || '';
+      contactOrg.value = cache.org || '';
+      contactTitle.value = cache.title || '';
+      contactWebsite.value = cache.website || '';
+      const built = buildContactPayload();
+      forgeHandlers.contact.showQr(cache.qrDataUrl || null, built.caption || '');
+    },
+    successMessage: (caption) => `Contact QR ready for ${caption}.`,
+  });
+
+  forgeHandlers.message = createSimpleForge({
+    setStatus,
+    cacheKey: 'qr-forge-message-cache',
+    previewEl: messagePreview,
+    generateBtn: messageGenerateBtn,
+    outputEl: messageOutput,
+    qrResultEl: messageQrResult,
+    qrImageEl: messageQrImage,
+    qrCaptionEl: messageQrCaption,
+    savePngBtn: messageSavePngBtn,
+    build: buildMessagePayload,
+    sync: syncMessageFields,
+    inputEls: [
+      messageType,
+      messageEmail,
+      messageSubject,
+      messageBody,
+      messageSmsPhone,
+      messageSmsBody,
+      messageTelPhone,
+    ],
+    collectCache: () => ({
+      type: messageType.value,
+      email: messageEmail.value,
+      subject: messageSubject.value,
+      body: messageBody.value,
+      smsPhone: messageSmsPhone.value,
+      smsBody: messageSmsBody.value,
+      telPhone: messageTelPhone.value,
+    }),
+    applyCache: (cache) => {
+      messageType.value = cache.type || 'email';
+      messageEmail.value = cache.email || '';
+      messageSubject.value = cache.subject || '';
+      messageBody.value = cache.body || '';
+      messageSmsPhone.value = cache.smsPhone || '';
+      messageSmsBody.value = cache.smsBody || '';
+      messageTelPhone.value = cache.telPhone || '';
+      syncMessageFields();
+      const built = buildMessagePayload();
+      forgeHandlers.message.showQr(
+        cache.qrDataUrl || null,
+        built.caption || ''
+      );
+    },
+    emptyMessage: 'Choose a message type to begin',
+    successMessage: (caption) => `Message QR ready for ${caption}.`,
+  });
+
+  const messageOnShow = forgeHandlers.message.onShow;
+  forgeHandlers.message.onShow = () => {
+    messageOnShow();
+    const focusMap = {
+      email: messageEmail,
+      sms: messageSmsPhone,
+      tel: messageTelPhone,
+    };
+    focusMap[messageType.value]?.focus?.();
+  };
+
+  forgeHandlers.text = createSimpleForge({
+    setStatus,
+    cacheKey: 'qr-forge-text-cache',
+    previewEl: textPreview,
+    generateBtn: textGenerateBtn,
+    outputEl: textOutput,
+    qrResultEl: textQrResult,
+    qrImageEl: textQrImage,
+    qrCaptionEl: textQrCaption,
+    savePngBtn: textSavePngBtn,
+    build: buildTextPayload,
+    focusEl: textContent,
+    inputEls: [textContent],
+    collectCache: () => ({ text: textContent.value }),
+    applyCache: (cache) => {
+      textContent.value = cache.text || '';
+      const built = buildTextPayload();
+      forgeHandlers.text.showQr(cache.qrDataUrl || null, built.caption || '');
+    },
+    emptyMessage: 'Enter text to begin',
+    successMessage: () => 'Text QR ready.',
+  });
+
+  forgeHandlers.location = createSimpleForge({
+    setStatus,
+    cacheKey: 'qr-forge-location-cache',
+    previewEl: locationPreview,
+    generateBtn: locationGenerateBtn,
+    outputEl: locationOutput,
+    qrResultEl: locationQrResult,
+    qrImageEl: locationQrImage,
+    qrCaptionEl: locationQrCaption,
+    savePngBtn: locationSavePngBtn,
+    build: buildLocationPayload,
+    focusEl: locationLat,
+    inputEls: [locationLat, locationLng, locationLabel],
+    collectCache: () => ({
+      lat: locationLat.value,
+      lng: locationLng.value,
+      label: locationLabel.value,
+    }),
+    applyCache: (cache) => {
+      locationLat.value = cache.lat || '';
+      locationLng.value = cache.lng || '';
+      locationLabel.value = cache.label || '';
+      const built = buildLocationPayload();
+      forgeHandlers.location.showQr(cache.qrDataUrl || null, built.caption || '');
+    },
+    emptyMessage: 'Enter coordinates to begin',
+    successMessage: (caption) => `Location QR ready for ${caption}.`,
+  });
+
+  forgeHandlers.event = createSimpleForge({
+    setStatus,
+    cacheKey: 'qr-forge-event-cache',
+    previewEl: eventPreview,
+    generateBtn: eventGenerateBtn,
+    outputEl: eventOutput,
+    qrResultEl: eventQrResult,
+    qrImageEl: eventQrImage,
+    qrCaptionEl: eventQrCaption,
+    savePngBtn: eventSavePngBtn,
+    build: buildEventPayload,
+    focusEl: eventTitle,
+    inputEls: [
+      eventTitle,
+      eventStart,
+      eventEnd,
+      eventLocation,
+      eventDescription,
+    ],
+    collectCache: () => ({
+      title: eventTitle.value,
+      start: eventStart.value,
+      end: eventEnd.value,
+      location: eventLocation.value,
+      description: eventDescription.value,
+    }),
+    applyCache: (cache) => {
+      eventTitle.value = cache.title || '';
+      eventStart.value = cache.start || '';
+      eventEnd.value = cache.end || '';
+      eventLocation.value = cache.location || '';
+      eventDescription.value = cache.description || '';
+      const built = buildEventPayload();
+      forgeHandlers.event.showQr(cache.qrDataUrl || null, built.caption || '');
+    },
+    emptyMessage: 'Enter event details to begin',
+    successMessage: (caption) => `Event QR ready for ${caption}.`,
+  });
+}
+
+function restoreSimpleForgeCaches() {
+  for (const key of ['contact', 'message', 'text', 'location', 'event']) {
+    forgeHandlers[key]?.restoreCache?.();
+  }
 }
 
 async function init() {
   initTheme();
+  initSimpleForges();
   initNavigation();
   showView('home');
 
@@ -799,6 +1262,13 @@ async function init() {
 
   await updatePreview();
   await updateWifiPreview();
+  await Promise.all([
+    forgeHandlers.contact?.updatePreview?.(),
+    forgeHandlers.message?.updatePreview?.(),
+    forgeHandlers.text?.updatePreview?.(),
+    forgeHandlers.location?.updatePreview?.(),
+    forgeHandlers.event?.updatePreview?.(),
+  ]);
 }
 
 init();
