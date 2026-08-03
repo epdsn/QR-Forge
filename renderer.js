@@ -1,3 +1,13 @@
+const appEl = document.querySelector('.app');
+const brandSub = document.getElementById('brandSub');
+const homeView = document.getElementById('homeView');
+const urlView = document.getElementById('urlView');
+const wifiView = document.getElementById('wifiView');
+const openUrlForge = document.getElementById('openUrlForge');
+const openWifiForge = document.getElementById('openWifiForge');
+const urlBack = document.getElementById('urlBack');
+const wifiBack = document.getElementById('wifiBack');
+
 const baseUrlInput = document.getElementById('baseUrl');
 const paramList = document.getElementById('paramList');
 const addParamBtn = document.getElementById('addParam');
@@ -19,6 +29,20 @@ const qrResult = document.getElementById('qrResult');
 const qrImage = document.getElementById('qrImage');
 const qrCaption = document.getElementById('qrCaption');
 const savePngBtn = document.getElementById('savePng');
+
+const wifiSsid = document.getElementById('wifiSsid');
+const wifiSecurity = document.getElementById('wifiSecurity');
+const wifiPasswordField = document.getElementById('wifiPasswordField');
+const wifiPassword = document.getElementById('wifiPassword');
+const wifiHidden = document.getElementById('wifiHidden');
+const wifiPreview = document.getElementById('wifiPreview');
+const wifiGenerateBtn = document.getElementById('wifiGenerate');
+const wifiOutput = document.getElementById('wifiOutput');
+const wifiQrResult = document.getElementById('wifiQrResult');
+const wifiQrImage = document.getElementById('wifiQrImage');
+const wifiQrCaption = document.getElementById('wifiQrCaption');
+const wifiSavePngBtn = document.getElementById('wifiSavePng');
+
 const statusEl = document.getElementById('status');
 const themeToggle = document.getElementById('themeToggle');
 const themeToggleLabel = document.getElementById('themeToggleLabel');
@@ -28,15 +52,24 @@ let lastResultUrl = null;
 let lastLongUrl = null;
 let lastShortUrl = null;
 let shortForLongUrl = null;
+let lastWifiDataUrl = null;
 let previewToken = 0;
+let wifiPreviewToken = 0;
 let cacheTimer = null;
+let wifiCacheTimer = null;
 let prefsTimer = null;
 let applyingWorkspace = false;
 
 const THEME_KEY = 'qr-forge-theme';
+const WIFI_CACHE_KEY = 'qr-forge-wifi-cache';
 const THEME_BG = {
   light: '#ecebf8',
   dark: '#1a1c31',
+};
+const VIEW_SUBTITLES = {
+  home: 'Choose a forge to begin.',
+  url: 'Build a URL. Stamp a code.',
+  wifi: 'Share a network. Scan to connect.',
 };
 
 const DEFAULT_PARAMS = [{ key: '', value: '' }];
@@ -44,6 +77,24 @@ const DEFAULT_PARAMS = [{ key: '', value: '' }];
 function setStatus(message, kind = '') {
   statusEl.textContent = message;
   statusEl.className = `status${kind ? ` ${kind}` : ''}`;
+}
+
+function showView(view) {
+  appEl.dataset.view = view;
+  homeView.hidden = view !== 'home';
+  urlView.hidden = view !== 'url';
+  wifiView.hidden = view !== 'wifi';
+  brandSub.textContent = VIEW_SUBTITLES[view];
+
+  if (view === 'url') {
+    syncOptionFields();
+    updatePreview();
+    if (!baseUrlInput.value) baseUrlInput.focus();
+  } else if (view === 'wifi') {
+    syncWifiFields();
+    updateWifiPreview();
+    if (!wifiSsid.value) wifiSsid.focus();
+  }
 }
 
 function createParamRow(key = '', value = '') {
@@ -177,6 +228,173 @@ function showQr(dataUrl, resultUrl, longUrl = null, shortUrl = null) {
   }
 }
 
+function showWifiQr(dataUrl, caption = '') {
+  lastWifiDataUrl = dataUrl || null;
+
+  if (dataUrl) {
+    wifiQrImage.src = dataUrl;
+    wifiQrCaption.textContent = caption;
+    wifiQrResult.hidden = false;
+    wifiOutput.dataset.state = 'ready';
+  } else {
+    wifiQrImage.removeAttribute('src');
+    wifiQrCaption.textContent = '';
+    wifiQrResult.hidden = true;
+    wifiOutput.dataset.state = 'empty';
+  }
+}
+
+function escapeWifiField(value) {
+  return String(value).replace(/([\\;,"])/g, '\\$1');
+}
+
+function buildWifiPayload() {
+  const ssid = wifiSsid.value.trim();
+  if (!ssid) {
+    return { error: 'Enter a network name (SSID).' };
+  }
+
+  const security = wifiSecurity.value;
+  const hidden = wifiHidden.checked;
+  const password = wifiPassword.value;
+
+  if (security !== 'nopass' && !password) {
+    return { error: 'Enter the network password.' };
+  }
+
+  let payload = `WIFI:T:${security};S:${escapeWifiField(ssid)};`;
+  if (security !== 'nopass') {
+    payload += `P:${escapeWifiField(password)};`;
+  }
+  payload += `H:${hidden ? 'true' : 'false'};;`;
+
+  return { payload, caption: ssid };
+}
+
+function maskWifiPreview(payload, security, password) {
+  if (security === 'nopass' || !password) return payload;
+
+  return payload.replace(
+    `P:${escapeWifiField(password)};`,
+    `P:${'*'.repeat(Math.min(password.length, 12))};`
+  );
+}
+
+function syncWifiFields() {
+  const openNetwork = wifiSecurity.value === 'nopass';
+  wifiPasswordField.hidden = openNetwork;
+  if (openNetwork) {
+    wifiPassword.value = '';
+  }
+}
+
+function collectWifiCache() {
+  return {
+    ssid: wifiSsid.value,
+    security: wifiSecurity.value,
+    password: wifiPassword.value,
+    hidden: wifiHidden.checked,
+    qrDataUrl: lastWifiDataUrl,
+  };
+}
+
+function applyWifiCache(cache) {
+  if (!cache || typeof cache !== 'object') return;
+
+  wifiSsid.value = cache.ssid || '';
+  wifiSecurity.value = cache.security || 'WPA';
+  wifiPassword.value = cache.password || '';
+  wifiHidden.checked = Boolean(cache.hidden);
+  syncWifiFields();
+  showWifiQr(cache.qrDataUrl || null, cache.ssid || '');
+}
+
+function scheduleWifiCache() {
+  clearTimeout(wifiCacheTimer);
+  wifiCacheTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(WIFI_CACHE_KEY, JSON.stringify(collectWifiCache()));
+    } catch (err) {
+      console.error(err);
+    }
+  }, 300);
+}
+
+function onWifiChange() {
+  syncWifiFields();
+  updateWifiPreview();
+  scheduleWifiCache();
+}
+
+async function updateWifiPreview() {
+  const token = ++wifiPreviewToken;
+  syncWifiFields();
+
+  if (!wifiSsid.value.trim()) {
+    wifiPreview.textContent = 'Enter a network name to begin';
+    wifiGenerateBtn.disabled = true;
+    return;
+  }
+
+  const result = buildWifiPayload();
+  if (token !== wifiPreviewToken) return;
+
+  if (result.error) {
+    wifiPreview.textContent = result.error;
+    wifiGenerateBtn.disabled = true;
+    return;
+  }
+
+  wifiPreview.textContent = maskWifiPreview(
+    result.payload,
+    wifiSecurity.value,
+    wifiPassword.value
+  );
+  wifiGenerateBtn.disabled = false;
+}
+
+async function generateWifiQr() {
+  const result = buildWifiPayload();
+  if (!result.payload) {
+    setStatus(result.error || 'Enter valid WiFi details.', 'error');
+    return;
+  }
+
+  setStatus('Generating…');
+  wifiGenerateBtn.disabled = true;
+
+  try {
+    const dataUrl = await window.qrForge.generateQr(result.payload);
+    showWifiQr(dataUrl, result.caption);
+    scheduleWifiCache();
+    setStatus(`WiFi QR ready for ${result.caption}.`, 'ok');
+  } catch (err) {
+    console.error(err);
+    setStatus(String(err?.message || 'Could not generate QR code.'), 'error');
+  } finally {
+    updateWifiPreview();
+  }
+}
+
+async function saveWifiPng() {
+  if (!lastWifiDataUrl) {
+    setStatus('Generate a QR code first.', 'error');
+    return;
+  }
+
+  try {
+    const result = await window.qrForge.savePng(lastWifiDataUrl);
+    if (result.ok) {
+      setStatus(`Saved to ${result.filePath}`, 'ok');
+    } else {
+      setStatus('Save cancelled.');
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus('Could not save PNG.', 'error');
+  }
+}
+
 function applyWorkspace(workspace) {
   if (!workspace || typeof workspace !== 'object') return;
 
@@ -193,7 +411,6 @@ function applyWorkspace(workspace) {
     if (typeof workspace.shortenerEndpoint === 'string') {
       shortenerEndpoint.value = workspace.shortenerEndpoint;
     }
-    // Secrets are never restored from workspace files.
     encryptSecret.value = '';
     syncOptionFields();
     const restoredShort =
@@ -477,6 +694,16 @@ function initTheme() {
   });
 }
 
+function restoreWifiCache() {
+  try {
+    const raw = localStorage.getItem(WIFI_CACHE_KEY);
+    if (!raw) return;
+    applyWifiCache(JSON.parse(raw));
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 async function restoreSession() {
   try {
     const [prefs, cached] = await Promise.all([
@@ -504,13 +731,25 @@ async function restoreSession() {
     console.error(err);
     setParams([]);
   }
+
+  restoreWifiCache();
+}
+
+function initNavigation() {
+  openUrlForge.addEventListener('click', () => showView('url'));
+  openWifiForge.addEventListener('click', () => showView('wifi'));
+  urlBack.addEventListener('click', () => showView('home'));
+  wifiBack.addEventListener('click', () => showView('home'));
 }
 
 async function init() {
   initTheme();
+  initNavigation();
+  showView('home');
 
   await restoreSession();
   syncOptionFields();
+  syncWifiFields();
 
   addParamBtn.addEventListener('click', () => {
     paramList.appendChild(createParamRow());
@@ -532,6 +771,13 @@ async function init() {
   saveWorkspaceBtn.addEventListener('click', saveWorkspace);
   openWorkspaceBtn.addEventListener('click', openWorkspace);
 
+  wifiSsid.addEventListener('input', onWifiChange);
+  wifiSecurity.addEventListener('change', onWifiChange);
+  wifiPassword.addEventListener('input', onWifiChange);
+  wifiHidden.addEventListener('change', onWifiChange);
+  wifiGenerateBtn.addEventListener('click', generateWifiQr);
+  wifiSavePngBtn.addEventListener('click', saveWifiPng);
+
   baseUrlInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') generateQr();
   });
@@ -544,9 +790,15 @@ async function init() {
   shortenerApiKey.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') generateQr();
   });
+  wifiPassword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generateWifiQr();
+  });
+  wifiSsid.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generateWifiQr();
+  });
 
   await updatePreview();
-  if (!baseUrlInput.value) baseUrlInput.focus();
+  await updateWifiPreview();
 }
 
 init();

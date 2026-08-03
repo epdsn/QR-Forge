@@ -38,7 +38,7 @@
       <span id="themeToggleLabel">Dark</span>
     </button>
 
-    <main class="app">
+    <main class="app" data-view="home">
       <header class="brand">
         <div class="brand-title">
           <svg
@@ -64,133 +64,243 @@
           </svg>
           <p class="brand-mark">QR Forge</p>
         </div>
-        <p class="brand-sub">Build a URL. Stamp a code.</p>
+        <p id="brandSub" class="brand-sub">Choose a forge to begin.</p>
       </header>
 
-      <div class="workspace">
-        <section class="composer" aria-label="URL composer">
-          <label class="field">
-            <span class="field-label">Base URL</span>
-            <input
-              id="baseUrl"
-              type="url"
-              placeholder="https://example.com/path"
-              autocomplete="off"
-              spellcheck="false"
-            />
-          </label>
+      <section id="homeView" class="home-view" aria-label="Choose a generator">
+        <div class="forge-grid">
+          <button type="button" class="forge-card" id="openUrlForge">
+            <span class="forge-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M10 13a5 5 0 0 1 7.07 0l1.41 1.41a5 5 0 0 1-7.07 7.07l-.71-.71" />
+                <path d="M14 11a5 5 0 0 1-7.07 0L5.52 9.59a5 5 0 0 1 7.07-7.07l.71.71" />
+              </svg>
+            </span>
+            <span class="forge-card-copy">
+              <span class="forge-card-title">URL Forge</span>
+              <span class="forge-card-hint">Build links with optional encryption and shortening</span>
+            </span>
+          </button>
 
-          <div class="encrypt-block params-block">
-            <label class="toggle">
-              <input type="checkbox" id="paramsToggle" />
-              <span class="toggle-ui" aria-hidden="true"></span>
-              <span class="toggle-copy">
-                <span class="toggle-title">URL parameters</span>
-                <span class="toggle-hint">Optional query string key/value pairs</span>
-              </span>
+          <button type="button" class="forge-card" id="openWifiForge">
+            <span class="forge-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12.5a14 14 0 0 1 14 0" />
+                <path d="M8.5 16a9 9 0 0 1 7 0" />
+                <path d="M12 20h.01" />
+                <path d="M2 8.5a20 20 0 0 1 20 0" />
+              </svg>
+            </span>
+            <span class="forge-card-copy">
+              <span class="forge-card-title">WiFi QR</span>
+              <span class="forge-card-hint">Generate a scannable code to join a wireless network</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <div id="urlView" class="forge-view" hidden>
+        <div class="forge-nav">
+          <button type="button" class="btn-back" id="urlBack">← Home</button>
+          <h2 class="forge-heading">URL Forge</h2>
+        </div>
+
+        <div class="workspace">
+          <section class="composer" aria-label="URL composer">
+            <label class="field">
+              <span class="field-label">Base URL</span>
+              <input
+                id="baseUrl"
+                type="url"
+                placeholder="https://example.com/path"
+                autocomplete="off"
+                spellcheck="false"
+              />
             </label>
 
-            <div id="paramsFields" class="toggle-fields" hidden>
-              <div class="params-head">
-                <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
+            <div class="encrypt-block params-block">
+              <label class="toggle">
+                <input type="checkbox" id="paramsToggle" />
+                <span class="toggle-ui" aria-hidden="true"></span>
+                <span class="toggle-copy">
+                  <span class="toggle-title">URL parameters</span>
+                  <span class="toggle-hint">Optional query string key/value pairs</span>
+                </span>
+              </label>
+
+              <div id="paramsFields" class="toggle-fields" hidden>
+                <div class="params-head">
+                  <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
+                </div>
+                <div class="param-columns">
+                  <span class="field-label">Name</span>
+                  <span class="field-label">Value</span>
+                  <span class="param-columns-spacer"></span>
+                </div>
+                <div id="paramList" class="param-list"></div>
               </div>
-              <div class="param-columns">
-                <span class="field-label">Name</span>
-                <span class="field-label">Value</span>
-                <span class="param-columns-spacer"></span>
+            </div>
+
+            <div class="encrypt-block">
+              <label class="toggle">
+                <input type="checkbox" id="encryptToggle" />
+                <span class="toggle-ui" aria-hidden="true"></span>
+                <span class="toggle-copy">
+                  <span class="toggle-title">Encrypt parameters</span>
+                  <span class="toggle-hint">Pack all fields into a single <code>code=</code> value</span>
+                </span>
+              </label>
+
+              <div id="secretField" class="toggle-fields" hidden>
+                <label class="field">
+                  <span class="field-label">Encryption secret</span>
+                  <input
+                    id="encryptSecret"
+                    type="text"
+                    placeholder="Shared secret used to encrypt"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </label>
               </div>
-              <div id="paramList" class="param-list"></div>
             </div>
-          </div>
 
-          <div class="encrypt-block">
-            <label class="toggle">
-              <input type="checkbox" id="encryptToggle" />
-              <span class="toggle-ui" aria-hidden="true"></span>
-              <span class="toggle-copy">
-                <span class="toggle-title">Encrypt parameters</span>
-                <span class="toggle-hint">Pack all fields into a single <code>code=</code> value</span>
-              </span>
+            <div class="encrypt-block">
+              <label class="toggle">
+                <input type="checkbox" id="shortenToggle" />
+                <span class="toggle-ui" aria-hidden="true"></span>
+                <span class="toggle-copy">
+                  <span class="toggle-title">Shorten URL</span>
+                  <span class="toggle-hint"
+                    >Requires your shortener API. Click Generate to create the short link for the QR.</span
+                  >
+                </span>
+              </label>
+
+              <div id="shortenerFields" class="toggle-fields" hidden>
+                <label class="field">
+                  <span class="field-label">Shortener endpoint</span>
+                  <input
+                    id="shortenerEndpoint"
+                    type="url"
+                    placeholder="https://api.example.com/shorten"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </label>
+                <label class="field">
+                  <span class="field-label">API key (optional)</span>
+                  <input
+                    id="shortenerApiKey"
+                    type="password"
+                    placeholder="Bearer / x-api-key value"
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div class="url-preview" aria-live="polite">
+              <span class="field-label">Resulting URL</span>
+              <code id="urlPreview" class="url-text">Enter a base URL to begin</code>
+            </div>
+
+            <div class="composer-actions">
+              <button type="button" id="generate" class="btn-primary">Generate</button>
+              <div class="workspace-actions">
+                <button type="button" id="saveWorkspace" class="btn-ghost">Save workspace</button>
+                <button type="button" id="openWorkspace" class="btn-ghost">Open workspace</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="output" id="output" data-state="empty" aria-label="QR code preview">
+            <div class="qr-placeholder" id="qrPlaceholder">
+              <p class="qr-placeholder-title">QR preview</p>
+              <p class="qr-placeholder-text">Enter parameters and click Generate</p>
+            </div>
+
+            <div class="qr-result" id="qrResult" hidden>
+              <div class="qr-frame">
+                <img id="qrImage" alt="Generated QR code" width="280" height="280" />
+              </div>
+              <p id="qrCaption" class="qr-caption"></p>
+              <button type="button" id="savePng" class="btn-secondary">Save as PNG</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div id="wifiView" class="forge-view" hidden>
+        <div class="forge-nav">
+          <button type="button" class="btn-back" id="wifiBack">← Home</button>
+          <h2 class="forge-heading">WiFi QR</h2>
+        </div>
+
+        <div class="workspace">
+          <section class="composer" aria-label="WiFi composer">
+            <label class="field">
+              <span class="field-label">Network name (SSID)</span>
+              <input
+                id="wifiSsid"
+                type="text"
+                placeholder="MyNetwork"
+                autocomplete="off"
+                spellcheck="false"
+              />
             </label>
 
-            <div id="secretField" class="toggle-fields" hidden>
-              <label class="field">
-                <span class="field-label">Encryption secret</span>
-                <input
-                  id="encryptSecret"
-                  type="text"
-                  placeholder="Shared secret used to encrypt"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div class="encrypt-block">
-            <label class="toggle">
-              <input type="checkbox" id="shortenToggle" />
-              <span class="toggle-ui" aria-hidden="true"></span>
-              <span class="toggle-copy">
-                <span class="toggle-title">Shorten URL</span>
-                <span class="toggle-hint"
-                  >Requires your shortener API. Click Generate to create the short link for the QR.</span
-                >
-              </span>
+            <label class="field">
+              <span class="field-label">Security</span>
+              <select id="wifiSecurity">
+                <option value="WPA">WPA / WPA2 / WPA3</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">None (open network)</option>
+              </select>
             </label>
 
-            <div id="shortenerFields" class="toggle-fields" hidden>
-              <label class="field">
-                <span class="field-label">Shortener endpoint</span>
-                <input
-                  id="shortenerEndpoint"
-                  type="url"
-                  placeholder="https://api.example.com/shorten"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-              </label>
-              <label class="field">
-                <span class="field-label">API key (optional)</span>
-                <input
-                  id="shortenerApiKey"
-                  type="password"
-                  placeholder="Bearer / x-api-key value"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-              </label>
+            <label class="field" id="wifiPasswordField">
+              <span class="field-label">Password</span>
+              <input
+                id="wifiPassword"
+                type="password"
+                placeholder="Network password"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+
+            <label class="checkbox-field">
+              <input type="checkbox" id="wifiHidden" />
+              <span>Hidden network</span>
+            </label>
+
+            <div class="url-preview" aria-live="polite">
+              <span class="field-label">QR payload preview</span>
+              <code id="wifiPreview" class="url-text">Enter a network name to begin</code>
             </div>
-          </div>
 
-          <div class="url-preview" aria-live="polite">
-            <span class="field-label">Resulting URL</span>
-            <code id="urlPreview" class="url-text">Enter a base URL to begin</code>
-          </div>
-
-          <div class="composer-actions">
-            <button type="button" id="generate" class="btn-primary">Generate</button>
-            <div class="workspace-actions">
-              <button type="button" id="saveWorkspace" class="btn-ghost">Save workspace</button>
-              <button type="button" id="openWorkspace" class="btn-ghost">Open workspace</button>
+            <div class="composer-actions">
+              <button type="button" id="wifiGenerate" class="btn-primary" disabled>Generate</button>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="output" id="output" data-state="empty" aria-label="QR code preview">
-          <div class="qr-placeholder" id="qrPlaceholder">
-            <p class="qr-placeholder-title">QR preview</p>
-            <p class="qr-placeholder-text">Enter parameters and click Generate</p>
-          </div>
-
-          <div class="qr-result" id="qrResult" hidden>
-            <div class="qr-frame">
-              <img id="qrImage" alt="Generated QR code" width="280" height="280" />
+          <section class="output" id="wifiOutput" data-state="empty" aria-label="WiFi QR preview">
+            <div class="qr-placeholder" id="wifiQrPlaceholder">
+              <p class="qr-placeholder-title">QR preview</p>
+              <p class="qr-placeholder-text">Enter network details and click Generate</p>
             </div>
-            <p id="qrCaption" class="qr-caption"></p>
-            <button type="button" id="savePng" class="btn-secondary">Save as PNG</button>
-          </div>
-        </section>
+
+            <div class="qr-result" id="wifiQrResult" hidden>
+              <div class="qr-frame">
+                <img id="wifiQrImage" alt="Generated WiFi QR code" width="280" height="280" />
+              </div>
+              <p id="wifiQrCaption" class="qr-caption"></p>
+              <button type="button" id="wifiSavePng" class="btn-secondary">Save as PNG</button>
+            </div>
+          </section>
+        </div>
       </div>
 
       <p id="status" class="status" role="status"></p>
