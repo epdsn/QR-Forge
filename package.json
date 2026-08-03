@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "pack:mac": "ELECTRON_BUILDER_CACHE=.cache/electron-builder electron-builder --dir --mac",
+    "dist": "electron-builder",
+    "dist:mac": "ELECTRON_BUILDER_CACHE=.cache/electron-builder electron-builder --mac zip"
   },
   "build": {
     "appId": "com.qrforge.app",
@@ -19,6 +21,8 @@
       "main.js",
       "preload.js",
       "forge-common.js",
+      "about.html",
+      "about.js",
       "index.html",
       "styles.css",
       "renderer.js",
@@ -38,12 +42,12 @@
       "shortcutName": "QR Forge"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": ["zip", "dmg"],
       "icon": "build/icon.png",
       "category": "public.app-category.utilities"
     }
   },
-  "author": "",
+  "author": "Eric Perez",
   "license": "MIT",
   "devDependencies": {
     "electron": "^37.2.0",

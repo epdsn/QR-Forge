@@ -15,4 +15,5 @@ contextBridge.exposeInMainWorld('qrForge', {
   openWorkspace: () => ipcRenderer.invoke('open-workspace'),
   shortenUrl: (url, endpoint, apiKey) =>
     ipcRenderer.invoke('shorten-url', { url, endpoint, apiKey }),
+  closeWindow: () => ipcRenderer.send('close-about-window'),
 });

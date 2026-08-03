@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About QR Forge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="about-body">
+    <main class="about-panel">
+      <svg class="about-logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <rect x="5" y="5" width="54" height="54" rx="3" stroke="currentColor" stroke-width="4" />
+        <g transform="translate(32 32) rotate(45)" fill="currentColor">
+          <rect x="-15" y="-16" width="28" height="9" rx="1.5" />
+          <path d="M13-16l7 4.5-7 4.5z" />
+          <rect x="-3.25" y="-8" width="6.5" height="27" rx="1.75" />
+        </g>
+      </svg>
+
+      <h1 class="about-title">QR Forge</h1>
+      <p id="aboutVersion" class="about-version">Version 1.0.0</p>
+      <p class="about-tagline">Build a URL. Stamp a code.</p>
+
+      <div class="about-meta">
+        <p><span class="about-label">Author</span> Eric Perez</p>
+        <p><span class="about-label">Copyright</span> © 2026 Eric Perez</p>
+        <p><span class="about-label">License</span> MIT</p>
+      </div>
+
+      <button type="button" id="aboutClose" class="btn-primary about-close">Close</button>
+    </main>
+
+    <script src="about.js"></script>
+  </body>
+</html>

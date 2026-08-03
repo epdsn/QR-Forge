@@ -1,8 +1,9 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
+const packageJson = require('./package.json');
 
 const DEFAULT_PREFS = {
   theme: 'light',
@@ -90,7 +91,89 @@ function createWindow() {
   win.loadFile('index.html');
 }
 
+let aboutWindow = null;
+
+function showAboutWindow() {
+  if (aboutWindow && !aboutWindow.isDestroyed()) {
+    aboutWindow.focus();
+    return;
+  }
+
+  aboutWindow = new BrowserWindow({
+    width: 360,
+    height: 380,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    closable: true,
+    title: 'About QR Forge',
+    icon: path.join(__dirname, 'build', 'icon.png'),
+    backgroundColor: '#ecebf8',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  aboutWindow.setMenu(null);
+  aboutWindow.once('ready-to-show', () => {
+    if (aboutWindow && !aboutWindow.isDestroyed()) {
+      aboutWindow.show();
+    }
+  });
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+  });
+  aboutWindow.loadFile('about.html', {
+    query: { v: packageJson.version },
+  });
+}
+
+function buildAppMenu() {
+  const aboutItem = {
+    label: 'About QR Forge',
+    click: () => showAboutWindow(),
+  };
+
+  const template =
+    process.platform === 'darwin'
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              aboutItem,
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+          { role: 'editMenu' },
+          { role: 'windowMenu' },
+        ]
+      : [
+          { role: 'fileMenu' },
+          { role: 'editMenu' },
+          { role: 'viewMenu' },
+          { role: 'windowMenu' },
+          {
+            label: 'Help',
+            submenu: [aboutItem],
+          },
+        ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.whenReady().then(() => {
+  buildAppMenu();
   createWindow();
 
   app.on('activate', () => {
@@ -147,6 +230,12 @@ ipcMain.handle('open-workspace', async () => {
 ipcMain.handle('set-window-bg', (event, color) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win && color) win.setBackgroundColor(color);
+});
+
+ipcMain.on('close-about-window', () => {
+  if (aboutWindow && !aboutWindow.isDestroyed()) {
+    aboutWindow.destroy();
+  }
 });
 
 ipcMain.handle('encrypt-params', async (_event, { params, secret }) => {
