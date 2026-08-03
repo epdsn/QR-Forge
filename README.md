@@ -126,7 +126,7 @@ Also accepts `short_url` or `url` as the response field name.
 
 Your AWS API can either redirect that short ID to the long URL, or resolve an ID to a stored payload — QR Forge only needs the `shortUrl` back.
 
-A ready-to-deploy example lives in [`examples/aws-shortener`](examples/aws-shortener).
+Deployable shortener: **[QR-Forge-Shortener](https://github.com/epdsn/QR-Forge-Shortener)** (separate repo).
 
 ## Project structure
 
@@ -136,9 +136,7 @@ A ready-to-deploy example lives in [`examples/aws-shortener`](examples/aws-short
 ├── renderer.js    # UI logic
 ├── index.html     # App layout
 ├── styles.css     # Styling
-├── package.json   # Dependencies and electron-builder config
-└── examples/
-    └── aws-shortener/   # API Gateway + Lambda + DynamoDB shortener
+└── package.json   # Dependencies and electron-builder config
 ```
 
 ## Tech stack
