@@ -1,6 +1,8 @@
 const baseUrlInput = document.getElementById('baseUrl');
 const paramList = document.getElementById('paramList');
 const addParamBtn = document.getElementById('addParam');
+const paramsToggle = document.getElementById('paramsToggle');
+const paramsFields = document.getElementById('paramsFields');
 const encryptToggle = document.getElementById('encryptToggle');
 const secretField = document.getElementById('secretField');
 const encryptSecret = document.getElementById('encryptSecret');
@@ -50,7 +52,8 @@ function createParamRow(key = '', value = '') {
 
   const keyInput = document.createElement('input');
   keyInput.type = 'text';
-  keyInput.placeholder = 'Key';
+  keyInput.placeholder = 'Parameter name';
+  keyInput.setAttribute('aria-label', 'Parameter name');
   keyInput.value = key;
   keyInput.autocomplete = 'off';
   keyInput.spellcheck = false;
@@ -58,6 +61,7 @@ function createParamRow(key = '', value = '') {
   const valueInput = document.createElement('input');
   valueInput.type = 'text';
   valueInput.placeholder = 'Value';
+  valueInput.setAttribute('aria-label', 'Parameter value');
   valueInput.value = value;
   valueInput.autocomplete = 'off';
   valueInput.spellcheck = false;
@@ -92,7 +96,7 @@ function getParams() {
 
 function setParams(params) {
   paramList.replaceChildren();
-  const rows = Array.isArray(params) && params.length ? params : DEFAULT_PARAMS;
+  const rows = Array.isArray(params) ? params : DEFAULT_PARAMS;
   for (const param of rows) {
     paramList.appendChild(
       createParamRow(param?.key || '', param?.value || '')
@@ -101,6 +105,8 @@ function setParams(params) {
 }
 
 function paramsObject() {
+  if (!paramsToggle.checked) return {};
+
   const obj = {};
   for (const { key, value } of getParams()) {
     if (!key) continue;
@@ -125,14 +131,20 @@ function parseBaseUrl() {
 }
 
 function syncOptionFields() {
+  paramsFields.hidden = !paramsToggle.checked;
   secretField.hidden = !encryptToggle.checked;
   shortenerFields.hidden = !shortenToggle.checked;
+
+  if (paramsToggle.checked && !paramList.children.length) {
+    paramList.appendChild(createParamRow());
+  }
 }
 
 function collectWorkspace() {
   return {
     version: 1,
     baseUrl: baseUrlInput.value.trim(),
+    paramsEnabled: paramsToggle.checked,
     params: getParams(),
     encrypt: encryptToggle.checked,
     shorten: shortenToggle.checked,
@@ -172,6 +184,10 @@ function applyWorkspace(workspace) {
   try {
     baseUrlInput.value = workspace.baseUrl || '';
     setParams(workspace.params);
+    paramsToggle.checked =
+      typeof workspace.paramsEnabled === 'boolean'
+        ? workspace.paramsEnabled
+        : Boolean(workspace.params?.some((p) => p?.key || p?.value));
     encryptToggle.checked = Boolean(workspace.encrypt);
     shortenToggle.checked = Boolean(workspace.shorten);
     if (typeof workspace.shortenerEndpoint === 'string') {
@@ -245,7 +261,7 @@ async function buildUrl() {
     return { url: url.toString() };
   }
 
-  for (const { key, value } of getParams()) {
+  for (const { key, value } of paramsToggle.checked ? getParams() : []) {
     if (!key) continue;
     url.searchParams.set(key, value);
   }
@@ -482,11 +498,11 @@ async function restoreSession() {
     if (cached?.version) {
       applyWorkspace(cached);
     } else {
-      setParams(DEFAULT_PARAMS);
+      setParams([]);
     }
   } catch (err) {
     console.error(err);
-    setParams(DEFAULT_PARAMS);
+    setParams([]);
   }
 }
 
@@ -502,6 +518,7 @@ async function init() {
   });
 
   baseUrlInput.addEventListener('input', onWorkspaceChange);
+  paramsToggle.addEventListener('change', onWorkspaceChange);
   encryptToggle.addEventListener('change', onWorkspaceChange);
   encryptSecret.addEventListener('input', updatePreview);
   shortenToggle.addEventListener('change', onWorkspaceChange);

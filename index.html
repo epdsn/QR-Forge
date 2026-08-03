@@ -80,12 +80,27 @@
             />
           </label>
 
-          <div class="params">
-            <div class="params-head">
-              <span class="field-label">URL parameters</span>
-              <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
+          <div class="encrypt-block params-block">
+            <label class="toggle">
+              <input type="checkbox" id="paramsToggle" />
+              <span class="toggle-ui" aria-hidden="true"></span>
+              <span class="toggle-copy">
+                <span class="toggle-title">URL parameters</span>
+                <span class="toggle-hint">Optional query string key/value pairs</span>
+              </span>
+            </label>
+
+            <div id="paramsFields" class="toggle-fields" hidden>
+              <div class="params-head">
+                <button type="button" id="addParam" class="btn-ghost">+ Add field</button>
+              </div>
+              <div class="param-columns">
+                <span class="field-label">Name</span>
+                <span class="field-label">Value</span>
+                <span class="param-columns-spacer"></span>
+              </div>
+              <div id="paramList" class="param-list"></div>
             </div>
-            <div id="paramList" class="param-list"></div>
           </div>
 
           <div class="encrypt-block">
@@ -98,16 +113,18 @@
               </span>
             </label>
 
-            <label class="field" id="secretField" hidden>
-              <span class="field-label">Encryption secret</span>
-              <input
-                id="encryptSecret"
-                type="text"
-                placeholder="Shared secret used to encrypt"
-                autocomplete="off"
-                spellcheck="false"
-              />
-            </label>
+            <div id="secretField" class="toggle-fields" hidden>
+              <label class="field">
+                <span class="field-label">Encryption secret</span>
+                <input
+                  id="encryptSecret"
+                  type="text"
+                  placeholder="Shared secret used to encrypt"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </label>
+            </div>
           </div>
 
           <div class="encrypt-block">
@@ -122,7 +139,7 @@
               </span>
             </label>
 
-            <div id="shortenerFields" class="shortener-fields" hidden>
+            <div id="shortenerFields" class="toggle-fields" hidden>
               <label class="field">
                 <span class="field-label">Shortener endpoint</span>
                 <input

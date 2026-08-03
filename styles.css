@@ -292,9 +292,7 @@ input::placeholder {
 
 .params-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.55rem;
+  justify-content: flex-end;
 }
 
 .param-list {
@@ -404,6 +402,10 @@ input::placeholder {
   color: var(--ink);
 }
 
+.toggle input:not(:checked) ~ .toggle-copy .toggle-hint {
+  display: none;
+}
+
 .toggle-hint {
   font-size: 0.78rem;
   color: var(--ink-soft);
@@ -417,10 +419,32 @@ input::placeholder {
   color: var(--accent-deep);
 }
 
-.shortener-fields {
+.toggle-fields {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.toggle-fields[hidden],
+#paramsFields[hidden],
+#secretField[hidden],
+#shortenerFields[hidden] {
+  display: none !important;
+}
+
+.param-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.5rem;
+  padding: 0 0.1rem;
+}
+
+.param-columns .field-label {
+  margin: 0;
+}
+
+.param-columns-spacer {
+  width: 2.35rem;
 }
 
 .url-preview {
